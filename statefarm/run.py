@@ -23,31 +23,39 @@ valid_path=path + '/valid/'
 
 histories = {}
 
-vgg = Vgg16()
+def validation_np_histogram():
+    probs = bn_model.predict(conv_val_feat, batch_size=batch_size)
+    expected_labels = val_batches.classes
+    our_labels = np.argmax(probs, axis=1)
+    print np.histogram(our_labels,range(11))[0]
+    
+def validation_confusion():
+    probs = bn_model.predict(conv_val_feat, batch_size=batch_size)
+    expected_labels = val_batches.classes
+    our_labels = np.argmax(probs, axis=1)
+    cm = confusion_matrix(expected_labels, our_labels)
+    plot_confusion_matrix(cm, val_batches.class_indices)
 
 batch_size=64
 
-model=vgg.model
-last_conv_idx = [i for i,l in enumerate(model.layers) if type(l) is Convolution2D][-1]
-conv_layers = model.layers[:last_conv_idx+1]
-conv_model = Sequential(conv_layers)
 (val_classes, trn_classes, val_labels, trn_labels,
     val_filenames, filenames, test_filenames) = get_classes(path)
+val_batches = get_batches(path+'valid', batch_size=batch_size, shuffle=False)
 
 conv_feat = load_array(path+'results/conv_feat.dat')
 conv_val_feat = load_array(path+'results/conv_val_feat.dat')
 
-def get_bn_layers(p):
+def get_bn_layers(p,input_shape):
     return [
-        MaxPooling2D(input_shape=conv_layers[-1].output_shape[1:]),
+        MaxPooling2D(input_shape=input_shape),
         Flatten(),
         Dropout(p/2),
         #Dense(128, activation='relu'),
-        Dense(1024, activation='relu'),
+        Dense(128, activation='relu'),
         BatchNormalization(),
         Dropout(p/2),
         #Dense(128, activation='relu'),
-        Dense(512, activation='relu'),
+        Dense(128, activation='relu'),
         BatchNormalization(),
         Dropout(p),
         Dense(10, activation='softmax')
@@ -55,25 +63,20 @@ def get_bn_layers(p):
 
 p=0.8 #-- wow isn't this high?
 
-bn_model = Sequential(get_bn_layers(p))
-bn_model.compile(Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+bn_model = Sequential(get_bn_layers(p,conv_val_feat.shape[1:]))
+bn_model.compile(Adam(lr=0.000001), loss='categorical_crossentropy', metrics=['accuracy'])
 
 # starting with super-small lr first
-bn_model.optimizer.lr=0.00001
-bn_model.fit(conv_feat, trn_labels, batch_size=batch_size, nb_epoch=3,
-             validation_data=(conv_val_feat, val_labels))
+def do_iter(lr,ep):
+    bn_model.optimizer.lr=lr
+    bn_model.fit(conv_feat, trn_labels, batch_size=batch_size, nb_epoch=ep,
+                 validation_data=(conv_val_feat, val_labels))
+    validation_np_histogram()
+    validation_confusion()
 
-bn_model.optimizer.lr=0.1
-bn_model.fit(conv_feat, trn_labels, batch_size=batch_size, nb_epoch=10,
-             validation_data=(conv_val_feat, val_labels))
-
-bn_model.optimizer.lr=0.01
-bn_model.fit(conv_feat, trn_labels, batch_size=batch_size, nb_epoch=10,
-             validation_data=(conv_val_feat, val_labels))
-
-bn_model.optimizer.lr=0.001
-bn_model.fit(conv_feat, trn_labels, batch_size=batch_size, nb_epoch=10,
-             validation_data=(conv_val_feat, val_labels))
+do_iter(0.0000001, 10)
+do_iter(0.001, 10)
+do_iter(0.0001, 10)
 
 latest_weights_filename='test1.h5'
 bn_model.save_weights(results_path+latest_weights_filename)
