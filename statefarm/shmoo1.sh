@@ -10,12 +10,10 @@
 #   1e-8 std 374.224598# histo [ 103   15    3  305  454  297   53    4 1309  212]
 #   1e-9 std 420.059103# histo [ 406   53   10   21 1427    1  313  467   54    3]
 
+LOGFILE=logs/shmoo1_0227_1.log
 
-
-LOGFILE=shmoo1b1.log
-
-./statefarm.py -v --ep0 9 --lr 1e-6 > ${LOGFILE}
-./statefarm.py -v --ep0 9 --lr 5e-7 >> ${LOGFILE}
-./statefarm.py -v --ep0 9 --lr 1e-7 >> ${LOGFILE}
-./statefarm.py -v --ep0 9 --lr 5e-8 >> ${LOGFILE}
-./statefarm.py -v --ep0 9 --lr 1e-8 >> ${LOGFILE}
+./statefarm.py -v --ep0 5 --lr 1e-6 --save 0227_1 > ${LOGFILE}
+./statefarm.py -v --ep0 5 --lr 5e-7 --save 0227_2 >> ${LOGFILE}
+./statefarm.py -v --ep0 5 --lr 1e-7 --save 0227_3 >> ${LOGFILE}
+./statefarm.py -v --ep0 5 --lr 5e-8 --save 0227_4 >> ${LOGFILE}
+./statefarm.py -v --ep0 5 --lr 1e-8 --save 0227_5 >> ${LOGFILE}

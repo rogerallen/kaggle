@@ -70,8 +70,10 @@ def get_bn_layers(N,M,p,input_shape):
 def do_iter(model,lr,ep):
     model.optimizer.lr=lr
     model.fit(CONV_FEAT, TRN_LABELS, batch_size=BATCH_SIZE,
-                 nb_epoch=ep,
-                 validation_data=(CONV_VAL_FEAT, VAL_LABELS))
+              nb_epoch=ep,
+              validation_data=(CONV_VAL_FEAT, VAL_LABELS),
+              verbose=2 # disable progress bar
+    )
     validation_np_histogram(model)
     validation_confusion(model)
 
@@ -147,16 +149,16 @@ class Application(object):
             help="initial epochs"
         )
         parser.add_option(
-            "--label",
-            dest="label",
+            "--save",
+            dest="save_label",
             default="foo",
-            help="label for filenames"
+            help="saved weight filename label"
         )
         parser.add_option(
             "--load",
             dest="load_label",
             default="",
-            help="weight label for loading"
+            help="start weight filename label"
         )
         self.options, self.args = parser.parse_args(argv)
 
@@ -180,7 +182,7 @@ class Application(object):
             self.options.dropout_rate,
             self.options.lr0,
             self.options.ep0,
-            self.options.label,
+            self.options.save_label,
             self.options.load_label
         )
         return 0
